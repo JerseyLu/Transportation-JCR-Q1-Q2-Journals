@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transportation JCR Q1 & Q2 Journals Data Table</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, system-ui, sans-serif); }
+.container { padding: 0.5rem 1rem 2rem; max-width: 1200px; margin: 0 auto; }
+.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+h2 { font-size: 1.25rem; font-weight: 600; color: #333; }
+.lang-switcher { display: flex; gap: 4px; }
+.lang-btn {
+  font-size: 12px; padding: 4px 12px; border-radius: 4px;
+  border: 1px solid #185FA5; background: #fff; color: #185FA5;
+  cursor: pointer; transition: all 0.2s; font-weight: 500;
+}
+.lang-btn.active { background: #185FA5; color: #fff; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.filter-btn {
+  font-size: 12px; padding: 4px 10px; border-radius: 20px;
+  border: 1px solid #ddd; background: #fafafa;
+  color: #555; cursor: pointer; transition: all 0.15s;
+}
+.filter-btn.active { background: #185FA5; color: #fff; border-color: #185FA5; }
+.filter-btn:hover:not(.active) { background: #eee; }
+.stats { font-size: 13px; color: #666; margin-bottom: 12px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 1000px; }
+col.c1 { width: 19%; }
+col.c2 { width: 7%; }
+col.c3 { width: 7%; }
+col.c4 { width: 9%; }
+col.c5 { width: 24%; }
+col.c6 { width: 11%; }
+col.c7 { width: 8%; }
+col.c8 { width: 7%; }
+col.c9 { width: 8%; }
+thead th {
+  padding: 8px 10px; text-align: left; font-weight: 600; font-size: 12px;
+  color: #555; border-bottom: 1px solid #ccc; background: #fafafa;
+}
+tbody tr { border-bottom: 1px solid #eee; transition: background 0.1s; }
+tbody tr:hover { background: #f9f9f9; }
+td { padding: 8px 10px; vertical-align: top; word-break: break-word; }
+.journal-name { font-weight: 600; color: #222; font-size: 13px; }
+a.journal-name { color: #185FA5; text-decoration: none; }
+a.journal-name:hover { text-decoration: underline; }
+.ext { font-size: 12px; color: #185FA5; text-decoration: none; }
+.ext:hover { text-decoration: underline; }
+.oa { font-size: 11px; color: #555; }
+.oa-gold { color: #BA7517; font-weight: 600; }
+.filter-sep { width: 1px; background: #ddd; margin: 0 4px; }
+.if-val { font-weight: 600; color: #185FA5; }
+.cite-val { font-size: 12px; color: #666; }
+.badge {
+  display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px;
+  font-weight: 600; margin: 1px 1px 2px 0; white-space: nowrap;
+}
+.badge-q1 { background: #E6F1FB; color: #0C447C; }
+.badge-q2 { background: #F1EFE8; color: #444441; }
+.badge-top { background: #FAC775; color: #633806; }
+.badge-nature { background: #EAF3DE; color: #27500A; }
+.tag {
+  display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 10px;
+  margin: 1px 2px 1px 0; white-space: nowrap;
+}
+.tag-stat { background: #E1F5EE; color: #085041; }
+.tag-causal { background: #EEEDFE; color: #3C3489; }
+.tag-spatial { background: #FAEEDA; color: #633806; }
+.tag-sharing { background: #FAECE7; color: #993C1D; }
+.tag-bigdata { background: #E6F1FB; color: #0C447C; }
+.tag-ml { background: #FBEAF0; color: #72243E; }
+.tag-or { background: #EAF3DE; color: #3B6D11; }
+.publisher { font-size: 12px; color: #666; }
+.no-data { text-align: center; padding: 2rem; color: #777; font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; font-size: 12px; align-items: center; }
+.legend-title { color: #666; font-weight: 500; }
+.note { font-size: 12px; color: #777; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-actions">
+    <h2 id="pageTitle">交通领域JCR Q1 &amp; Q2期刊数据表</h2>
+    <div class="lang-switcher">
+      <button class="lang-btn active" data-lang="zh">中文</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all" id="btn_all">全部</button>
+    <button class="filter-btn" data-filter="stat" id="btn_stat">交通统计建模</button>
+    <button class="filter-btn" data-filter="causal" id="btn_causal">因果推断</button>
+    <button class="filter-btn" data-filter="spatial" id="btn_spatial">空间计量</button>
+    <button class="filter-btn" data-filter="sharing" id="btn_sharing">共享出行</button>
+    <button class="filter-btn" data-filter="bigdata" id="btn_bigdata">交通大数据</button>
+    <button class="filter-btn" data-filter="ml" id="btn_ml">机器学习/AI</button>
+    <button class="filter-btn" data-filter="or" id="btn_or">运筹优化</button>
+    <span class="filter-sep"></span>
+    <button class="filter-btn tier-btn active" data-tier="all" id="tier_all">Q1 + Q2</button>
+    <button class="filter-btn tier-btn" data-tier="Q1" id="tier_q1">Q1</button>
+    <button class="filter-btn tier-btn" data-tier="Q2" id="tier_q2">Q2</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="table-wrap">
+    <table id="mainTable">
+      <colgroup>
+        <col class="c1"><col class="c2"><col class="c3"><col class="c4">
+        <col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9">
+      </colgroup>
+      <thead>
+        <tr>
+          <th id="th_journal">期刊</th>
+          <th id="th_if">IF (2024)</th>
+          <th id="th_cs">CiteScore</th>
+          <th id="th_jcr">JCR</th>
+          <th id="th_scope">研究方向</th>
+          <th id="th_sci">SCI类别</th>
+          <th id="th_pub">出版社</th>
+          <th id="th_oa">开放获取</th>
+          <th id="th_stats">录用率/审稿时长</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="no-data" id="noData" style="display:none;">该方向暂无匹配期刊</div>
+  </div>
+
+  <div class="legend" id="legendContainer">
+    <span class="legend-title" id="legendTitle">研究方向：</span>
+    <span class="tag tag-stat" id="lg_stat">统计建模</span>
+    <span class="tag tag-causal" id="lg_causal">因果推断</span>
+    <span class="tag tag-spatial" id="lg_spatial">空间计量</span>
+    <span class="tag tag-sharing" id="lg_sharing">共享出行</span>
+    <span class="tag tag-bigdata" id="lg_bigdata">大数据</span>
+    <span class="tag tag-ml" id="lg_ml">ML/AI</span>
+    <span class="tag tag-or" id="lg_or">运筹优化</span>
+  </div>
+  <p class="note" id="pageNote"></p>
+</div>
+
+<script>
+const journals = [
+  {
+    name: "npj Urban Sustainability", if: 8.8, cs: "11.0", jcr: "Q1", top: true, nature: true,
+    scope: { zh: "城市可持续、共享出行、智慧城市、城市交通", en: "Urban Sustainability, Shared Mobility, Smart Cities, Urban Transport" },
+    tags: ["sharing","spatial","bigdata"], sci: "Urban Studies / Green Sci", pub: "Nature Portfolio"
+  },
+  {
+    name: "Sustainable Cities and Society", if: 12.0, cs: "19.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "智慧城市、共享出行、可持续发展、城市规划", en: "Smart Cities, Shared Mobility, Sustainable Development, Urban Planning" },
+    tags: ["sharing","spatial","ml"], sci: "Green & Sustainable Sci", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part E: Logistics and Transportation Review", if: 10.1, cs: "15.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "物流优化、运输网络、运筹学、供应链", en: "Logistics Optimization, Transport Networks, Operations Research, Supply Chain" },
+    tags: ["or","stat"], sci: "Transportation Sci & Tech / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Computers, Environment and Urban Systems", if: 9.6, cs: "14.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "GIS、空间数据科学、城市交通、城市计算", en: "GIS, Spatial Data Science, Urban Transport, Urban Computing" },
+    tags: ["spatial","bigdata","ml"], sci: "Environmental Studies / Geography", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part C: Emerging Technologies", if: 7.9, cs: "14.7", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "AI、机器学习、智能交通系统、交通大数据", en: "AI, Machine Learning, Intelligent Transport Systems, Transport Big Data" },
+    tags: ["ml","bigdata","stat"], sci: "Transportation Sci & Tech", pub: "Elsevier"
+  },
+  {
+    name: "Landscape and Urban Planning", if: 7.9, cs: "13.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "建成环境、骑行环境、城市设计、空间规划", en: "Built Environment, Cycling Environment, Urban Design, Spatial Planning" },
+    tags: ["spatial","sharing"], sci: "Urban Studies / Ecology", pub: "Elsevier"
+  },
+  {
+    name: "Omega – The International Journal of Management Science", if: 7.0, cs: "12.5", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "管理科学、运筹优化、决策模型、交通优化", en: "Management Science, Operations Research, Decision Models, Transport Optimization" },
+    tags: ["or","stat"], sci: "Operations Research & Management", pub: "Elsevier"
+  },
+  {
+    name: "European Journal of Operational Research", if: 6.0, cs: "10.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "运筹优化、决策分析、交通建模、物流", en: "Operations Research, Decision Analysis, Transport Modeling, Logistics" },
+    tags: ["or","stat"], sci: "Operations Research & Management", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part B: Methodological", if: 6.3, cs: "11.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "交通统计建模、计量经济学、优化、需求建模", en: "Transport Statistical Modeling, Econometrics, Optimization, Demand Modeling" },
+    tags: ["stat","causal","or"], sci: "Transportation Sci & Tech / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part A: Policy and Practice", if: 6.8, cs: "10.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "交通政策、行为分析、因果评估、出行行为", en: "Transport Policy, Behavioral Analysis, Causal Evaluation, Travel Behavior" },
+    tags: ["causal","stat","sharing"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "IEEE Transactions on Intelligent Transportation Systems", if: 8.4, cs: "17.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "智能交通、AI、交通大数据、深度学习", en: "Intelligent Transport, AI, Transport Big Data, Deep Learning" },
+    tags: ["ml","bigdata","stat"], sci: "Transportation Sci & Tech / EE", pub: "IEEE"
+  },
+  {
+    name: "Analytic Methods in Accident Research", if: 7.5, cs: "12.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "交通统计方法、因果推断、生存分析、事故建模", en: "Transport Statistical Methods, Causal Inference, Survival Analysis, Accident Modeling" },
+    tags: ["stat","causal"], sci: "Transportation Sci & Tech", pub: "Elsevier"
+  },
+  {
+    name: "Information Sciences", if: 8.1, cs: "13.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "AI、机器学习、数据挖掘、知识发现", en: "AI, Machine Learning, Data Mining, Knowledge Discovery" },
+    tags: ["ml","bigdata"], sci: "Computer Sci / Information Systems", pub: "Elsevier"
+  },
+  {
+    name: "Expert Systems with Applications", if: 7.5, cs: "12.5", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "AI应用、预测模型、交通预测、智能决策", en: "AI Applications, Predictive Models, Traffic Forecasting, Smart Decisions" },
+    tags: ["ml","bigdata"], sci: "Computer Sci / Artificial Intelligence", pub: "Elsevier"
+  },
+  {
+    name: "Knowledge-Based Systems", if: 7.2, cs: "11.5", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "机器学习、知识发现、深度学习应用", en: "Machine Learning, Knowledge Discovery, Deep Learning Applications" },
+    tags: ["ml"], sci: "Computer Sci / Artificial Intelligence", pub: "Elsevier"
+  },
+  {
+    name: "Engineering Applications of Artificial Intelligence", if: 7.5, cs: "11.0", jcr: "Q1", top: true, nature: false,
+    scope: { zh: "AI工程应用、交通预测、智能系统", en: "AI Engineering Applications, Traffic Forecasting, Smart Systems" },
+    tags: ["ml","bigdata"], sci: "Engineering / Artificial Intelligence", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part D: Transport and Environment", if: 7.6, cs: "11.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "交通与环境、共享出行、低碳交通、可持续发展", en: "Transport & Environment, Shared Mobility, Low-Carbon Transport, Sustainable Development" },
+    tags: ["sharing","causal","stat"], sci: "Transportation / Environmental Studies", pub: "Elsevier"
+  },
+  {
+    name: "Cities", if: 6.5, cs: "10.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "城市研究、共享出行、空间规划、城市政策", en: "Urban Studies, Shared Mobility, Spatial Planning, Urban Policy" },
+    tags: ["sharing","spatial"], sci: "Urban Studies", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Science", if: 5.5, cs: "9.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "运筹学、交通系统优化、统计建模、网络分析", en: "Operations Research, Transport Systems Optimization, Statistical Modeling, Network Analysis" },
+    tags: ["stat","or"], sci: "Transportation Sci & Tech", pub: "INFORMS"
+  },
+  {
+    name: "Accident Analysis & Prevention", if: 5.7, cs: "9.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "道路安全、因果推断、风险分析、统计方法", en: "Road Safety, Causal Inference, Risk Analysis, Statistical Methods" },
+    tags: ["causal","stat"], sci: "Public Health / Transportation", pub: "Elsevier"
+  },
+  {
+    name: "Networks and Spatial Economics", if: 4.5, cs: "7.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "空间经济学、交通网络、空间计量经济", en: "Spatial Economics, Transport Networks, Spatial Econometrics" },
+    tags: ["spatial","stat","or"], sci: "Regional & Urban Planning / OR", pub: "Springer"
+  },
+  {
+    name: "Transportmetrica A: Transport Science", if: 4.5, cs: "7.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "数学建模、交通计量、统计分析", en: "Mathematical Modeling, Transport Econometrics, Statistical Analysis" },
+    tags: ["stat","or"], sci: "Transportation Sci & Tech", pub: "Taylor & Francis"
+  },
+  {
+    name: "Environment and Planning B: Urban Analytics and City Science", if: 4.5, cs: "7.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "城市分析、空间数据科学、GIS、城市计算", en: "Urban Analytics, Spatial Data Science, GIS, Urban Computing" },
+    tags: ["spatial","bigdata"], sci: "Urban Studies / Geography", pub: "SAGE"
+  },
+  {
+    name: "Travel Behaviour and Society", if: 5.1, cs: "8.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "出行行为、共享出行、离散选择建模", en: "Travel Behavior, Shared Mobility, Discrete Choice Modeling" },
+    tags: ["sharing","stat","causal"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Future Generation Computer Systems", if: 6.2, cs: "10.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "大数据、云计算、智慧交通、AI应用", en: "Big Data, Cloud Computing, Smart Transport, AI Applications" },
+    tags: ["bigdata","ml"], sci: "Computer Sci / Theory & Methods", pub: "Elsevier"
+  },
+  {
+    name: "Transport Policy", if: 5.3, cs: "8.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "交通政策与治理、行为分析、政策评估", en: "Transport Policy & Governance, Behavioral Analysis, Policy Evaluation" },
+    tags: ["causal","sharing"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Journal of Choice Modelling", if: 4.0, cs: "6.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "离散选择模型、行为建模、出行需求", en: "Discrete Choice Models, Behavioral Modeling, Travel Demand" },
+    tags: ["stat","causal"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Applied Geography", if: 4.5, cs: "7.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "GIS、空间统计、地理建模、空间分析", en: "GIS, Spatial Statistics, Geographical Modeling, Spatial Analysis" },
+    tags: ["spatial","bigdata"], sci: "Geography", pub: "Elsevier"
+  },
+  {
+    name: "Transportation Research Part F: Traffic Psychology and Behaviour", if: 3.5, cs: "6.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "出行行为、驾驶行为、心理学、行为建模", en: "Travel Behavior, Driving Behavior, Psychology, Behavioral Modeling" },
+    tags: ["stat","causal"], sci: "Transportation / Psychology", pub: "Elsevier"
+  },
+  {
+    name: "Transportmetrica B: Transport Dynamics", if: 4.5, cs: "7.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "网络动力学、复杂交通系统、时空建模", en: "Network Dynamics, Complex Transport Systems, Spatiotemporal Modeling" },
+    tags: ["stat","bigdata"], sci: "Transportation Sci & Tech", pub: "Taylor & Francis"
+  },
+  {
+    name: "Case Studies on Transport Policy", if: 4.0, cs: "6.0", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "政策评估与实践案例、共享出行政策", en: "Policy Evaluation & Practical Cases, Shared Mobility Policy" },
+    tags: ["causal","sharing"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "Urban Studies", if: 4.5, cs: "7.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "城市科学、空间分析、城市经济", en: "Urban Science, Spatial Analysis, Urban Economics" },
+    tags: ["spatial","sharing"], sci: "Urban Studies / SSCI", pub: "SAGE"
+  },
+  {
+    name: "Transportation Research Interdisciplinary Perspectives", if: 4.0, cs: "6.5", jcr: "Q1", top: false, nature: false,
+    scope: { zh: "跨学科交通研究、行为分析、可持续交通", en: "Interdisciplinary Transport Research, Behavioral Analysis, Sustainable Transport" },
+    tags: ["sharing","causal"], sci: "Transportation / SSCI", pub: "Elsevier"
+  },
+  {
+    name: "npj Sustainable Mobility and Transport", if: "新刊", cs: "—", jcr: "Q1*", top: false, nature: true,
+    scope: { zh: "可持续交通、低碳出行、多模式交通、智能出行", en: "Sustainable Transport, Low-Carbon Travel, Multimodal Transport, Smart Mobility" },
+    tags: ["sharing","stat","ml"], sci: "Transportation / Green Sci", pub: "Nature Portfolio"
+  }
+  ,{ name: "Research in Transportation Business & Management", if: "≈3–4", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "交通管理、运营与商业模式、共享出行", en: "Transport Management, Operations & Business Models, Shared Mobility" },
+    tags: ["sharing","or"], sci: "Transportation / SSCI", pub: "Elsevier" },
+  { name: "Research in Transportation Economics", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "交通经济学、定价与政策、成本收益分析", en: "Transport Economics, Pricing & Policy, Cost-Benefit Analysis" },
+    tags: ["stat","causal"], sci: "Economics / Transportation", pub: "Elsevier" },
+  { name: "EURO Journal on Transportation and Logistics", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "运输与物流优化、网络设计、运筹方法", en: "Transport & Logistics Optimization, Network Design, OR Methods" },
+    tags: ["or"], sci: "Operations Research / Transportation", pub: "Elsevier" },
+  { name: "Journal of Rail Transport Planning & Management", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "轨道交通规划、运营管理、时刻表优化", en: "Rail Planning, Operations Management, Timetable Optimization" },
+    tags: ["or","stat"], sci: "Transportation Sci & Tech", pub: "Elsevier" },
+  { name: "Transportation Research Record", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "综合交通研究（TRB年会论文集）、数据与方法应用", en: "General Transportation Research (TRB Annual Meeting), Data & Methods" },
+    tags: ["stat","bigdata","sharing"], sci: "Transportation Sci & Tech", pub: "SAGE" },
+  { name: "Transportation Letters", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "交通快报、短篇方法与实证研究", en: "Transport Letters, Short Methodological & Empirical Studies" },
+    tags: ["stat","sharing"], sci: "Transportation / SSCI", pub: "Taylor & Francis" },
+  { name: "Journal of Intelligent Transportation Systems", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "智能交通技术、交通预测、控制与管理", en: "ITS Technology, Traffic Forecasting, Control & Management" },
+    tags: ["ml","bigdata"], sci: "Transportation Sci & Tech", pub: "Taylor & Francis" },
+  { name: "International Journal of Sustainable Transportation", if: "≈3–4", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "可持续交通、绿色出行、共享与微出行", en: "Sustainable Transport, Green Travel, Shared & Micromobility" },
+    tags: ["sharing","stat"], sci: "Transportation / Environmental Studies", pub: "Taylor & Francis" },
+  { name: "Journal of Transportation Safety & Security", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "交通安全与安保、风险与事故分析", en: "Transport Safety & Security, Risk & Crash Analysis" },
+    tags: ["stat","causal"], sci: "Transportation Sci & Tech", pub: "Taylor & Francis" },
+  { name: "IET Intelligent Transport Systems", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "智能交通、车路协同、交通数据分析", en: "Intelligent Transport, Vehicle-Infrastructure Cooperation, Traffic Data Analytics" },
+    tags: ["ml","bigdata"], sci: "Transportation Sci & Tech / EE", pub: "Wiley / IET" },
+  { name: "Public Transport", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "公共交通规划与运营、客流分析", en: "Public Transport Planning & Operations, Ridership Analysis" },
+    tags: ["stat","bigdata","or"], sci: "Transportation / SSCI", pub: "Springer" },
+  { name: "Journal of Transport and Land Use", if: "≈2–3", cs: "—", jcr: "Q2", top: false, nature: false,
+    scope: { zh: "交通与土地利用、可达性、建成环境", en: "Transport & Land Use, Accessibility, Built Environment" },
+    tags: ["spatial","causal"], sci: "Transportation / Regional & Urban Planning", pub: "JTLU (Univ. of Minnesota)" }
+];
+
+
+// ---- Official sites. Elsevier pages follow a stable ScienceDirect slug pattern; others are listed explicitly.
+const slugOverride = {
+  "Omega – The International Journal of Management Science": "omega",
+  "Transportation Research Part F: Traffic Psychology and Behaviour": "transportation-research-part-f-traffic-psychology-and-behaviour"
+};
+const siteMap = {
+  "npj Urban Sustainability": "https://www.nature.com/npjurbansustain/",
+  "npj Sustainable Mobility and Transport": "https://www.nature.com/npjsumtra/",
+  "IEEE Transactions on Intelligent Transportation Systems": "https://ieee-itss.org/pub/t-its/",
+  "Transportation Science": "https://pubsonline.informs.org/journal/trsc",
+  "Networks and Spatial Economics": "https://link.springer.com/journal/11067",
+  "Transportmetrica A: Transport Science": "https://www.tandfonline.com/journals/ttra20",
+  "Transportmetrica B: Transport Dynamics": "https://www.tandfonline.com/journals/ttrb20",
+  "Environment and Planning B: Urban Analytics and City Science": "https://journals.sagepub.com/home/epb",
+  "Urban Studies": "https://journals.sagepub.com/home/usj",
+  "Transportation Research Record": "https://journals.sagepub.com/home/trr",
+  "Transportation Letters": "https://www.tandfonline.com/journals/ytrl20",
+  "Journal of Intelligent Transportation Systems": "https://www.tandfonline.com/journals/gits20",
+  "International Journal of Sustainable Transportation": "https://www.tandfonline.com/journals/ujst20",
+  "Journal of Transportation Safety & Security": "https://www.tandfonline.com/journals/utss20",
+  "IET Intelligent Transport Systems": "https://ietresearch.onlinelibrary.wiley.com/journal/17519578",
+  "Public Transport": "https://link.springer.com/journal/12469",
+  "Journal of Transport and Land Use": "https://www.jtlu.org"
+};
+const statsMap = {
+  "Transportation Science": "https://pubsonline.informs.org/authorportal/journal-metrics/transportation-science"
+};
+const goldOA = ["npj Urban Sustainability","npj Sustainable Mobility and Transport","Transportation Research Interdisciplinary Perspectives","Journal of Transport and Land Use"];
+function elsSlug(n) {
+  return slugOverride[n] || n.toLowerCase().replace(/&/g, "and").replace(/[:,]/g, "").replace(/\s+/g, "-");
+}
+function siteUrl(j) {
+  return siteMap[j.name] || `https://www.sciencedirect.com/journal/${elsSlug(j.name)}`;
+}
+function statsUrl(j) {
+  if (statsMap[j.name]) return statsMap[j.name];
+  return j.pub === "Elsevier" ? `https://www.sciencedirect.com/journal/${elsSlug(j.name)}/about/insights` : null;
+}
+function oaType(j) { return goldOA.includes(j.name) ? "gold" : "hybrid"; }
+
+const i18n = {
+  zh: {
+    pageTitle: "交通领域JCR Q1 & Q2期刊数据表",
+    filters: {
+      all: "全部", stat: "交通统计建模", causal: "因果推断", spatial: "空间计量",
+      sharing: "共享出行", bigdata: "交通大数据", ml: "机器学习/AI", or: "运筹优化"
+    },
+    tableHeaders: {
+      journal: "期刊", if: "IF (2024)", cs: "CiteScore", jcr: "JCR",
+      scope: "研究方向", sci: "SCI类别", pub: "出版社", oa: "开放获取", stats: "录用率/审稿时长"
+    },
+    oaLabel: { gold: "完全OA", hybrid: "订阅+OA可选" },
+    statsLink: "官方数据 ↗",
+    tierAll: "Q1 + Q2",
+    noData: "该方向暂无匹配期刊",
+    totalTpl: (n) => `共 ${n} 种期刊`,
+    badges: { top: "中科院 TOP", nature: "Nature子刊" },
+    tags: {
+      stat: "统计建模", causal: "因果推断", spatial: "空间计量",
+      sharing: "共享出行", bigdata: "大数据", ml: "ML/AI", or: "运筹优化"
+    },
+    legendTitle: "研究方向：",
+    note: "* IF数据来源：2025年JCR报告（反映2024年影响因子）。CiteScore为Scopus数据。部分期刊IF以Scopus CiteScore综合估算；Q2期刊的IF为区间估计（≈），分区与IF请以官方JCR为准。期刊名可点击跳转官网。「录用率/审稿时长」列链接至出版社官方期刊指标页（Elsevier Journal Insights 等），录用率、首次决定时间等因刊而异、且多数期刊不公开，故不在表内列出具体数值，请以官方页面为准。开放获取模式为常规情况，投稿前请核对官网。",
+    newJournal: "新刊"
+  },
+  en: {
+    pageTitle: "Transportation JCR Q1 & Q2 Journals Data Table",
+    filters: {
+      all: "All", stat: "Statistical Modeling", causal: "Causal Inference", spatial: "Spatial Econometrics",
+      sharing: "Shared Mobility", bigdata: "Transport Big Data", ml: "Machine Learning/AI", or: "Operations Research"
+    },
+    tableHeaders: {
+      journal: "Journal", if: "IF (2024)", cs: "CiteScore", jcr: "JCR",
+      scope: "Research Direction", sci: "SCI Category", pub: "Publisher", oa: "Open Access", stats: "Acceptance rate / speed"
+    },
+    oaLabel: { gold: "Fully OA", hybrid: "Hybrid" },
+    statsLink: "Official stats ↗",
+    tierAll: "Q1 + Q2",
+    noData: "No matching journals for this direction",
+    totalTpl: (n) => `Total ${n} journals`,
+    badges: { top: "CAS TOP", nature: "Nature Portfolio" },
+    tags: {
+      stat: "Statistical", causal: "Causal", spatial: "Spatial",
+      sharing: "Shared", bigdata: "Big Data", ml: "ML/AI", or: "OR"
+    },
+    legendTitle: "Research Directions:",
+    note: "* IF source: 2025 JCR report (2024 Impact Factors). CiteScore is from Scopus. Some IFs are estimated from CiteScore; Q2 IFs are approximate ranges (≈). Please verify quartiles and IFs in the official JCR. Journal names link to their official sites. The acceptance rate / speed column links to each publisher’s official journal-metrics page (e.g. Elsevier Journal Insights); acceptance rates and decision times vary by journal and are often not published, so no figures are hard-coded here. Open-access model reflects the usual case; check the journal site before submitting.",
+    newJournal: "New"
+  }
+};
+
+const tagClasses = {
+  stat: "tag-stat", causal: "tag-causal", spatial: "tag-spatial",
+  sharing: "tag-sharing", bigdata: "tag-bigdata", ml: "tag-ml", or: "tag-or"
+};
+
+let currentLang = "zh";
+let currentFilter = "all";
+let currentTier = "all";
+
+function updateStrings() {
+  const langObj = i18n[currentLang];
+  
+  // Title & Note
+  document.getElementById("pageTitle").textContent = langObj.pageTitle;
+  document.getElementById("pageNote").textContent = langObj.note;
+  
+  // Filters
+  document.getElementById("btn_all").textContent = langObj.filters.all;
+  document.getElementById("btn_stat").textContent = langObj.filters.stat;
+  document.getElementById("btn_causal").textContent = langObj.filters.causal;
+  document.getElementById("btn_spatial").textContent = langObj.filters.spatial;
+  document.getElementById("btn_sharing").textContent = langObj.filters.sharing;
+  document.getElementById("btn_bigdata").textContent = langObj.filters.bigdata;
+  document.getElementById("btn_ml").textContent = langObj.filters.ml;
+  document.getElementById("btn_or").textContent = langObj.filters.or;
+  
+  // Table Headers
+  document.getElementById("th_journal").textContent = langObj.tableHeaders.journal;
+  document.getElementById("th_if").textContent = langObj.tableHeaders.if;
+  document.getElementById("th_cs").textContent = langObj.tableHeaders.cs;
+  document.getElementById("th_jcr").textContent = langObj.tableHeaders.jcr;
+  document.getElementById("th_scope").textContent = langObj.tableHeaders.scope;
+  document.getElementById("th_sci").textContent = langObj.tableHeaders.sci;
+  document.getElementById("th_pub").textContent = langObj.tableHeaders.pub;
+  document.getElementById("th_oa").textContent = langObj.tableHeaders.oa;
+  document.getElementById("th_stats").textContent = langObj.tableHeaders.stats;
+  document.getElementById("tier_all").textContent = langObj.tierAll;
+  document.documentElement.lang = currentLang;
+  document.title = langObj.pageTitle;
+  
+  // Legend
+  document.getElementById("legendTitle").textContent = langObj.legendTitle;
+  for (const k in langObj.tags) {
+    document.getElementById(`lg_${k}`).textContent = langObj.tags[k];
+  }
+  
+  // No data msg
+  document.getElementById("noData").textContent = langObj.noData;
+}
+
+function renderTable() {
+  const tbody = document.getElementById("tbody");
+  const noData = document.getElementById("noData");
+  const stats = document.getElementById("stats");
+  const langObj = i18n[currentLang];
+
+  const tierRank = j => (j.jcr === "Q2" ? 1 : 0);
+  const sorted = [...journals].sort((a, b) => {
+    if (tierRank(a) !== tierRank(b)) return tierRank(a) - tierRank(b);
+    const ia = typeof a.if === "number" ? a.if : 0;
+    const ib = typeof b.if === "number" ? b.if : 0;
+    return ib - ia;
+  });
+
+  const filtered = sorted
+    .filter(j => currentFilter === "all" || j.tags.includes(currentFilter))
+    .filter(j => currentTier === "all" || j.jcr.startsWith(currentTier));
+
+  tbody.innerHTML = "";
+  if (filtered.length === 0) {
+    noData.style.display = "block";
+    stats.textContent = "";
+    return;
+  }
+  noData.style.display = "none";
+  stats.textContent = langObj.totalTpl(filtered.length);
+
+  filtered.forEach((j) => {
+    const tr = document.createElement("tr");
+    const ifStr = typeof j.if === "number" ? j.if.toFixed(1) : (j.if === "新刊" ? langObj.newJournal : j.if);
+
+    const badges = [];
+    badges.push(`<span class="badge ${j.jcr === "Q2" ? "badge-q2" : "badge-q1"}">${j.jcr}</span>`);
+    if (j.top) badges.push(`<span class="badge badge-top">${langObj.badges.top}</span>`);
+    if (j.nature) badges.push(`<span class="badge badge-nature">${langObj.badges.nature}</span>`);
+
+    const tagHtml = j.tags.map(t => `<span class="tag ${tagClasses[t]}">${langObj.tags[t]}</span>`).join("");
+    const scopeStr = j.scope[currentLang];
+
+    tr.innerHTML = `
+      <td><a class="journal-name" href="${siteUrl(j)}" target="_blank" rel="noopener noreferrer">${j.name}</a></td>
+      <td><span class="if-val">${ifStr}</span></td>
+      <td><span class="cite-val">${j.cs}</span></td>
+      <td>${badges.join("")}</td>
+      <td>${tagHtml}<br><span style="font-size:11px;color:#777;margin-top:4px;display:inline-block">${scopeStr}</span></td>
+      <td><span style="font-size:11px;color:#777;">${j.sci}</span></td>
+      <td><span class="publisher">${j.pub}</span></td>
+      <td><span class="oa ${oaType(j) === "gold" ? "oa-gold" : ""}">${langObj.oaLabel[oaType(j)]}</span></td>
+      <td>${statsUrl(j) ? `<a class="ext" href="${statsUrl(j)}" target="_blank" rel="noopener noreferrer">${langObj.statsLink}</a>` : "—"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Bind Lang switchers
+document.querySelectorAll(".lang-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentLang = btn.dataset.lang;
+    updateStrings();
+    renderTable();
+  });
+});
+
+// Bind Filters
+document.querySelectorAll(".filter-btn[data-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn[data-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    renderTable();
+  });
+});
+
+document.querySelectorAll(".tier-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tier-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentTier = btn.dataset.tier;
+    renderTable();
+  });
+});
+
+// Initial Render
+updateStrings();
+renderTable();
+</script>
+</body>
+</html>
